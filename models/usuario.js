@@ -35,6 +35,7 @@ const Usuario = sequelize.define("usuario", {
         allowNull: false,
     },
 }, {
+    tableName: "usuarios",
     timestamps: true,
     paranoid: true,
 })

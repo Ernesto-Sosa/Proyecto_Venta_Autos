@@ -17,6 +17,7 @@ const Rol = sequelize.define("rol", {
         allowNull: false,
     }
 }, {
+    tableName: "rols",
     timestamps: true,
     paranoid: true,
 })

@@ -1,5 +1,7 @@
 const sequelize = require("./helpers/database.js"); 
 const express = require("express");
+const swaggerUi = require("swagger-ui-express");
+const swaggerSpec = require("./swagger.js");
 
 const Usuario = require("./models/usuario.js");
 const Vehiculo = require("./models/vehiculo.js");
@@ -20,6 +22,9 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Swagger
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 // Rutas
 app.use("/api/roles", rolRoutes);
 app.use("/api/usuarios", usuarioRoutes);
@@ -37,4 +42,5 @@ sequelize
 
 app.listen(3000, () => {
  console.log("Servidor iniciado en el puerto 3000");
+ console.log("Swagger disponible en http://localhost:3000/api-docs");
 });

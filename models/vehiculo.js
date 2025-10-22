@@ -50,6 +50,7 @@ const Vehiculo = sequelize.define("vehiculo",{
         allowNull: false,
     },
 }, {
+    tableName: "vehiculos",
     timestamps: true,
     paranoid: true,
 })

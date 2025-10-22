@@ -28,6 +28,7 @@ const Venta = sequelize.define("venta", {
         allowNull: false,
     },
 }, {
+    tableName: "venta",
     timestamps: true,
     paranoid: true,
 })

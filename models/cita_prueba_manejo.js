@@ -32,6 +32,7 @@ const Cita_Prueba_Manejo = sequelize.define("cita_prueba_manejo", {
         allowNull: false,
     },
 }, {
+    tableName: "prueba_cita_manejos",
     timestamps: true,
     paranoid: true,
 })
