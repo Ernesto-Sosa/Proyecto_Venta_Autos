@@ -2,6 +2,8 @@ const sequelize = require("./helpers/database.js");
 const express = require("express");
 const swaggerUi = require("swagger-ui-express");
 const swaggerSpec = require("./swagger.js");
+require ("dotenv").config();
+const cors = require("cors");
 
 const Usuario = require("./models/usuario.js");
 const Vehiculo = require("./models/vehiculo.js");
@@ -17,6 +19,16 @@ const ventaRoutes = require("./routes/ventaRoutes");
 const citaPruebaManejRoutes = require("./routes/citaPruebaManejRoutes");
 
 const app = express();
+
+// Configuracion de Cors
+const allowedOrigins = ["http://localhost:3000"];
+app.use(
+    cors({
+        origin: allowedOrigins,
+        methods: ["GET", "POST", "PUT", "DELETE"],
+        credentials: true,
+    })
+);
 
 // Middleware
 app.use(express.json());
