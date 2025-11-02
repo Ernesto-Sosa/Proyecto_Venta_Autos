@@ -68,7 +68,20 @@ const usuarioController = require("../controllers/usuarioController");
  *       500:
  *         description: Error al crear el usuario
  */
-router.post("/", usuarioController.createUsuario);
+router.post("/", async (req, res) => {
+  try {
+    const { nombre, apellido, email, contraseña, telefono, rol_id } = req.body;
+    
+    if (!nombre || !apellido || !email || !contraseña || !telefono || !rol_id) {
+      return res.status(400).json({ error: "Faltan campos requeridos" });
+    }
+    
+    const usuario = await usuarioController.createUsuario({ nombre, apellido, email, contraseña, telefono, rol_id });
+    res.status(201).json({ message: "Usuario creado exitosamente", usuario });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 /**
  * @swagger
@@ -88,7 +101,14 @@ router.post("/", usuarioController.createUsuario);
  *       500:
  *         description: Error al obtener los usuarios
  */
-router.get("/", usuarioController.getAllUsuarios);
+router.get("/", async (req, res) => {
+  try {
+    const usuarios = await usuarioController.getAllUsuarios();
+    res.status(200).json(usuarios);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 /**
  * @swagger
@@ -115,7 +135,25 @@ router.get("/", usuarioController.getAllUsuarios);
  *       500:
  *         description: Error al obtener el usuario
  */
-router.get("/:id", usuarioController.getUsuarioById);
+router.get("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    if (!id || isNaN(id)) {
+      return res.status(400).json({ error: "ID inválido" });
+    }
+    
+    const usuario = await usuarioController.getUsuarioById(id);
+    
+    if (!usuario) {
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    }
+    
+    res.status(200).json(usuario);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 /**
  * @swagger
@@ -148,7 +186,26 @@ router.get("/:id", usuarioController.getUsuarioById);
  *       500:
  *         description: Error al actualizar el usuario
  */
-router.put("/:id", usuarioController.updateUsuario);
+router.put("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nombre, apellido, email, contraseña, telefono, rol_id } = req.body;
+    
+    if (!id || isNaN(id)) {
+      return res.status(400).json({ error: "ID inválido" });
+    }
+    
+    const usuario = await usuarioController.updateUsuario(id, { nombre, apellido, email, contraseña, telefono, rol_id });
+    
+    if (!usuario) {
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    }
+    
+    res.status(200).json({ message: "Usuario actualizado exitosamente", usuario });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 /**
  * @swagger
@@ -171,6 +228,24 @@ router.put("/:id", usuarioController.updateUsuario);
  *       500:
  *         description: Error al eliminar el usuario
  */
-router.delete("/:id", usuarioController.deleteUsuario);
+router.delete("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    if (!id || isNaN(id)) {
+      return res.status(400).json({ error: "ID inválido" });
+    }
+    
+    const usuario = await usuarioController.deleteUsuario(id);
+    
+    if (!usuario) {
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    }
+    
+    res.status(200).json({ message: "Usuario eliminado exitosamente" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 module.exports = router;

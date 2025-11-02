@@ -1,67 +1,32 @@
 const Venta = require("../models/venta");
 
-// Crear una nueva venta
-exports.createVenta = async (req, res) => {
-  try {
-    const { fecha, precio_final, usuario_id, vehiculo_id, estado_venta } = req.body;
-    const venta = await Venta.create({ fecha, precio_final, usuario_id, vehiculo_id, estado_venta });
-    res.status(201).json({ message: "Venta creada exitosamente", venta });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+exports.createVenta = async (datos) => {
+  const venta = await Venta.create(datos);
+  return venta;
 };
 
-// Obtener todas las ventas
-exports.getAllVentas = async (req, res) => {
-  try {
-    const ventas = await Venta.findAll();
-    res.status(200).json(ventas);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+exports.getAllVentas = async () => {
+  const ventas = await Venta.findAll();
+  return ventas;
 };
 
-// Obtener una venta por ID
-exports.getVentaById = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const venta = await Venta.findByPk(id);
-    if (!venta) {
-      return res.status(404).json({ message: "Venta no encontrada" });
-    }
-    res.status(200).json(venta);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+exports.getVentaById = async (id) => {
+  const venta = await Venta.findByPk(id);
+  return venta;
 };
 
-// Actualizar una venta
-exports.updateVenta = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { fecha, precio_final, usuario_id, vehiculo_id, estado_venta } = req.body;
-    const venta = await Venta.findByPk(id);
-    if (!venta) {
-      return res.status(404).json({ message: "Venta no encontrada" });
-    }
-    await venta.update({ fecha, precio_final, usuario_id, vehiculo_id, estado_venta });
-    res.status(200).json({ message: "Venta actualizada exitosamente", venta });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+exports.updateVenta = async (id, datos) => {
+  const venta = await Venta.findByPk(id);
+  if (venta) {
+    await venta.update(datos);
   }
+  return venta;
 };
 
-// Eliminar una venta
-exports.deleteVenta = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const venta = await Venta.findByPk(id);
-    if (!venta) {
-      return res.status(404).json({ message: "Venta no encontrada" });
-    }
+exports.deleteVenta = async (id) => {
+  const venta = await Venta.findByPk(id);
+  if (venta) {
     await venta.destroy();
-    res.status(200).json({ message: "Venta eliminada exitosamente" });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
   }
+  return venta;
 };

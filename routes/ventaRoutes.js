@@ -64,7 +64,20 @@ const ventaController = require("../controllers/ventaController");
  *       500:
  *         description: Error al crear la venta
  */
-router.post("/", ventaController.createVenta);
+router.post("/", async (req, res) => {
+  try {
+    const { fecha, precio_final, usuario_id, vehiculo_id, estado_venta } = req.body;
+    
+    if (!fecha || !precio_final || !usuario_id || !vehiculo_id || !estado_venta) {
+      return res.status(400).json({ error: "Faltan campos requeridos" });
+    }
+    
+    const venta = await ventaController.createVenta({ fecha, precio_final, usuario_id, vehiculo_id, estado_venta });
+    res.status(201).json({ message: "Venta creada exitosamente", venta });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 /**
  * @swagger
@@ -84,7 +97,14 @@ router.post("/", ventaController.createVenta);
  *       500:
  *         description: Error al obtener las ventas
  */
-router.get("/", ventaController.getAllVentas);
+router.get("/", async (req, res) => {
+  try {
+    const ventas = await ventaController.getAllVentas();
+    res.status(200).json(ventas);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 /**
  * @swagger
@@ -111,7 +131,25 @@ router.get("/", ventaController.getAllVentas);
  *       500:
  *         description: Error al obtener la venta
  */
-router.get("/:id", ventaController.getVentaById);
+router.get("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    if (!id || isNaN(id)) {
+      return res.status(400).json({ error: "ID inválido" });
+    }
+    
+    const venta = await ventaController.getVentaById(id);
+    
+    if (!venta) {
+      return res.status(404).json({ message: "Venta no encontrada" });
+    }
+    
+    res.status(200).json(venta);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 /**
  * @swagger
@@ -144,7 +182,26 @@ router.get("/:id", ventaController.getVentaById);
  *       500:
  *         description: Error al actualizar la venta
  */
-router.put("/:id", ventaController.updateVenta);
+router.put("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { fecha, precio_final, usuario_id, vehiculo_id, estado_venta } = req.body;
+    
+    if (!id || isNaN(id)) {
+      return res.status(400).json({ error: "ID inválido" });
+    }
+    
+    const venta = await ventaController.updateVenta(id, { fecha, precio_final, usuario_id, vehiculo_id, estado_venta });
+    
+    if (!venta) {
+      return res.status(404).json({ message: "Venta no encontrada" });
+    }
+    
+    res.status(200).json({ message: "Venta actualizada exitosamente", venta });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 /**
  * @swagger
@@ -167,6 +224,24 @@ router.put("/:id", ventaController.updateVenta);
  *       500:
  *         description: Error al eliminar la venta
  */
-router.delete("/:id", ventaController.deleteVenta);
+router.delete("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    if (!id || isNaN(id)) {
+      return res.status(400).json({ error: "ID inválido" });
+    }
+    
+    const venta = await ventaController.deleteVenta(id);
+    
+    if (!venta) {
+      return res.status(404).json({ message: "Venta no encontrada" });
+    }
+    
+    res.status(200).json({ message: "Venta eliminada exitosamente" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 module.exports = router;
