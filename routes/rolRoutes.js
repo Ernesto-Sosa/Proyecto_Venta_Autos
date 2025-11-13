@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const rolController = require("../controllers/rolController");
+const AppError = require("../error/appError");
 
 /**
  * @swagger
@@ -51,18 +52,26 @@ const rolController = require("../controllers/rolController");
  *       500:
  *         description: Error al crear el rol
  */
-router.post("/", async (req, res) => {
+router.post("/", async (req, res, next) => {
   try {
     const { nombre_rol, descripcion } = req.body;
     
     if (!nombre_rol || !descripcion) {
-      return res.status(400).json({ error: "Faltan campos requeridos" });
+      throw new AppError("Faltan campos requeridos: nombre_rol y descripcion", 400);
+    }
+    
+    // Verificar si ya existe un rol con ese nombre
+    const roles = await rolController.getAllRoles();
+    const rolExistente = roles.find(r => r.nombre_rol.toLowerCase() === nombre_rol.toLowerCase());
+    
+    if (rolExistente) {
+      throw new AppError(`Ya existe un rol con el nombre '${nombre_rol}'`, 400);
     }
     
     const rol = await rolController.createRol({ nombre_rol, descripcion });
-    res.status(201).json({ message: "Rol creado exitosamente", rol });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(201).json(rol);
+  } catch (err) {
+    next(err);
   }
 });
 
@@ -84,12 +93,12 @@ router.post("/", async (req, res) => {
  *       500:
  *         description: Error al obtener los roles
  */
-router.get("/", async (req, res) => {
+router.get("/", async (req, res, next) => {
   try {
     const roles = await rolController.getAllRoles();
     res.status(200).json(roles);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  } catch (err) {
+    next(err);
   }
 });
 
@@ -118,23 +127,23 @@ router.get("/", async (req, res) => {
  *       500:
  *         description: Error al obtener el rol
  */
-router.get("/:id", async (req, res) => {
+router.get("/:id", async (req, res, next) => {
   try {
     const { id } = req.params;
     
     if (!id || isNaN(id)) {
-      return res.status(400).json({ error: "ID inválido" });
+      throw new AppError("ID de rol inválido", 400);
     }
     
     const rol = await rolController.getRolById(id);
     
     if (!rol) {
-      return res.status(404).json({ message: "Rol no encontrado" });
+      throw new AppError(`Rol con ID ${id} no encontrado`, 404);
     }
     
     res.status(200).json(rol);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  } catch (err) {
+    next(err);
   }
 });
 
@@ -169,24 +178,81 @@ router.get("/:id", async (req, res) => {
  *       500:
  *         description: Error al actualizar el rol
  */
-router.put("/:id", async (req, res) => {
+router.put("/:id", async (req, res, next) => {
   try {
     const { id } = req.params;
     const { nombre_rol, descripcion } = req.body;
     
     if (!id || isNaN(id)) {
-      return res.status(400).json({ error: "ID inválido" });
+      throw new AppError("ID de rol inválido", 400);
     }
     
     const rol = await rolController.updateRol(id, { nombre_rol, descripcion });
     
     if (!rol) {
-      return res.status(404).json({ message: "Rol no encontrado" });
+      throw new AppError(`Rol con ID ${id} no encontrado`, 404);
     }
     
     res.status(200).json({ message: "Rol actualizado exitosamente", rol });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * @swagger
+ * /api/roles/{id}:
+ *   patch:
+ *     summary: Actualizar parcialmente un rol
+ *     tags: [Roles]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID del rol
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               nombre_rol:
+ *                 type: string
+ *               descripcion:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Rol actualizado exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Rol'
+ *       404:
+ *         description: Rol no encontrado
+ *       500:
+ *         description: Error al actualizar el rol
+ */
+router.patch("/:id", async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { nombre_rol, descripcion } = req.body;
+    
+    if (!id || isNaN(id)) {
+      throw new AppError("ID de rol inválido", 400);
+    }
+    
+    const rol = await rolController.updateRol(id, { nombre_rol, descripcion });
+    
+    if (!rol) {
+      throw new AppError(`Rol con ID ${id} no encontrado`, 404);
+    }
+    
+    res.status(200).json(rol);
+  } catch (err) {
+    next(err);
   }
 });
 
@@ -211,23 +277,23 @@ router.put("/:id", async (req, res) => {
  *       500:
  *         description: Error al eliminar el rol
  */
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", async (req, res, next) => {
   try {
     const { id } = req.params;
     
     if (!id || isNaN(id)) {
-      return res.status(400).json({ error: "ID inválido" });
+      throw new AppError("ID de rol inválido", 400);
     }
     
     const rol = await rolController.deleteRol(id);
     
     if (!rol) {
-      return res.status(404).json({ message: "Rol no encontrado" });
+      throw new AppError(`Rol con ID ${id} no encontrado`, 404);
     }
     
     res.status(200).json({ message: "Rol eliminado exitosamente" });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  } catch (err) {
+    next(err);
   }
 });
 

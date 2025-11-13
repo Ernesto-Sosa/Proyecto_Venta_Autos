@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const citaController = require("../controllers/citaPruebaManejController");
+const AppError = require("../error/appError");
 
 /**
  * @swagger
@@ -68,18 +69,30 @@ const citaController = require("../controllers/citaPruebaManejController");
  *       500:
  *         description: Error al crear la cita
  */
-router.post("/", async (req, res) => {
+router.post("/", async (req, res, next) => {
   try {
     const { fecha_cita, hora_cita, estado, notas, usuario_id, vehiculo_id } = req.body;
     
     if (!fecha_cita || !hora_cita || !estado || !usuario_id || !vehiculo_id) {
-      return res.status(400).json({ error: "Faltan campos requeridos" });
+      throw new AppError("Faltan campos requeridos: fecha_cita, hora_cita, estado, usuario_id, vehiculo_id", 400);
+    }
+    
+    // Verificar si ya existe una cita con las mismas características
+    const citas = await citaController.getAllCitas();
+    const citaExistente = citas.find(c => 
+      c.fecha_cita === fecha_cita && 
+      c.hora_cita === hora_cita && 
+      c.vehiculo_id === vehiculo_id
+    );
+    
+    if (citaExistente) {
+      throw new AppError('Ya existe una cita para este vehículo en esa fecha y hora', 400);
     }
     
     const cita = await citaController.createCita({ fecha_cita, hora_cita, estado, notas, usuario_id, vehiculo_id });
     res.status(201).json({ message: "Cita creada exitosamente", cita });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  } catch (err) {
+    next(err);
   }
 });
 
@@ -101,12 +114,12 @@ router.post("/", async (req, res) => {
  *       500:
  *         description: Error al obtener las citas
  */
-router.get("/", async (req, res) => {
+router.get("/", async (req, res, next) => {
   try {
     const citas = await citaController.getAllCitas();
     res.status(200).json(citas);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  } catch (err) {
+    next(err);
   }
 });
 
@@ -135,23 +148,23 @@ router.get("/", async (req, res) => {
  *       500:
  *         description: Error al obtener la cita
  */
-router.get("/:id", async (req, res) => {
+router.get("/:id", async (req, res, next) => {
   try {
     const { id } = req.params;
     
     if (!id || isNaN(id)) {
-      return res.status(400).json({ error: "ID inválido" });
+      throw new AppError("ID de cita inválido", 400);
     }
     
     const cita = await citaController.getCitaById(id);
     
     if (!cita) {
-      return res.status(404).json({ message: "Cita no encontrada" });
+      throw new AppError(`Cita con ID ${id} no encontrada`, 404);
     }
     
     res.status(200).json(cita);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  } catch (err) {
+    next(err);
   }
 });
 
@@ -186,24 +199,24 @@ router.get("/:id", async (req, res) => {
  *       500:
  *         description: Error al actualizar la cita
  */
-router.put("/:id", async (req, res) => {
+router.put("/:id", async (req, res, next) => {
   try {
     const { id } = req.params;
     const { fecha_cita, hora_cita, estado, notas, usuario_id, vehiculo_id } = req.body;
     
     if (!id || isNaN(id)) {
-      return res.status(400).json({ error: "ID inválido" });
+      throw new AppError("ID de cita inválido", 400);
     }
     
     const cita = await citaController.updateCita(id, { fecha_cita, hora_cita, estado, notas, usuario_id, vehiculo_id });
     
     if (!cita) {
-      return res.status(404).json({ message: "Cita no encontrada" });
+      throw new AppError(`Cita con ID ${id} no encontrada`, 404);
     }
     
     res.status(200).json({ message: "Cita actualizada exitosamente", cita });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  } catch (err) {
+    next(err);
   }
 });
 
@@ -228,23 +241,23 @@ router.put("/:id", async (req, res) => {
  *       500:
  *         description: Error al eliminar la cita
  */
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", async (req, res, next) => {
   try {
     const { id } = req.params;
     
     if (!id || isNaN(id)) {
-      return res.status(400).json({ error: "ID inválido" });
+      throw new AppError("ID de cita inválido", 400);
     }
     
     const cita = await citaController.deleteCita(id);
     
     if (!cita) {
-      return res.status(404).json({ message: "Cita no encontrada" });
+      throw new AppError(`Cita con ID ${id} no encontrada`, 404);
     }
     
     res.status(200).json({ message: "Cita eliminada exitosamente" });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  } catch (err) {
+    next(err);
   }
 });
 

@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const usuarioController = require("../controllers/usuarioController");
+const AppError = require("../error/appError");
 
 /**
  * @swagger
@@ -68,18 +69,26 @@ const usuarioController = require("../controllers/usuarioController");
  *       500:
  *         description: Error al crear el usuario
  */
-router.post("/", async (req, res) => {
+router.post("/", async (req, res, next) => {
   try {
     const { nombre, apellido, email, contraseña, telefono, rol_id } = req.body;
     
     if (!nombre || !apellido || !email || !contraseña || !telefono || !rol_id) {
-      return res.status(400).json({ error: "Faltan campos requeridos" });
+      throw new AppError("Faltan campos requeridos: nombre, apellido, email, contraseña, telefono, rol_id", 400);
+    }
+    
+    // Verificar si ya existe un usuario con ese email
+    const usuarios = await usuarioController.getAllUsuarios();
+    const usuarioExistente = usuarios.find(u => u.email.toLowerCase() === email.toLowerCase());
+    
+    if (usuarioExistente) {
+      throw new AppError(`Ya existe un usuario con el email '${email}'`, 400);
     }
     
     const usuario = await usuarioController.createUsuario({ nombre, apellido, email, contraseña, telefono, rol_id });
     res.status(201).json({ message: "Usuario creado exitosamente", usuario });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  } catch (err) {
+    next(err);
   }
 });
 
@@ -101,12 +110,12 @@ router.post("/", async (req, res) => {
  *       500:
  *         description: Error al obtener los usuarios
  */
-router.get("/", async (req, res) => {
+router.get("/", async (req, res, next) => {
   try {
     const usuarios = await usuarioController.getAllUsuarios();
     res.status(200).json(usuarios);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  } catch (err) {
+    next(err);
   }
 });
 
@@ -135,23 +144,23 @@ router.get("/", async (req, res) => {
  *       500:
  *         description: Error al obtener el usuario
  */
-router.get("/:id", async (req, res) => {
+router.get("/:id", async (req, res, next) => {
   try {
     const { id } = req.params;
     
     if (!id || isNaN(id)) {
-      return res.status(400).json({ error: "ID inválido" });
+      throw new AppError("ID de usuario inválido", 400);
     }
     
     const usuario = await usuarioController.getUsuarioById(id);
     
     if (!usuario) {
-      return res.status(404).json({ message: "Usuario no encontrado" });
+      throw new AppError(`Usuario con ID ${id} no encontrado`, 404);
     }
     
     res.status(200).json(usuario);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  } catch (err) {
+    next(err);
   }
 });
 
@@ -186,24 +195,24 @@ router.get("/:id", async (req, res) => {
  *       500:
  *         description: Error al actualizar el usuario
  */
-router.put("/:id", async (req, res) => {
+router.put("/:id", async (req, res, next) => {
   try {
     const { id } = req.params;
     const { nombre, apellido, email, contraseña, telefono, rol_id } = req.body;
     
     if (!id || isNaN(id)) {
-      return res.status(400).json({ error: "ID inválido" });
+      throw new AppError("ID de usuario inválido", 400);
     }
     
     const usuario = await usuarioController.updateUsuario(id, { nombre, apellido, email, contraseña, telefono, rol_id });
     
     if (!usuario) {
-      return res.status(404).json({ message: "Usuario no encontrado" });
+      throw new AppError(`Usuario con ID ${id} no encontrado`, 404);
     }
     
     res.status(200).json({ message: "Usuario actualizado exitosamente", usuario });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  } catch (err) {
+    next(err);
   }
 });
 
@@ -228,23 +237,23 @@ router.put("/:id", async (req, res) => {
  *       500:
  *         description: Error al eliminar el usuario
  */
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", async (req, res, next) => {
   try {
     const { id } = req.params;
     
     if (!id || isNaN(id)) {
-      return res.status(400).json({ error: "ID inválido" });
+      throw new AppError("ID de usuario inválido", 400);
     }
     
     const usuario = await usuarioController.deleteUsuario(id);
     
     if (!usuario) {
-      return res.status(404).json({ message: "Usuario no encontrado" });
+      throw new AppError(`Usuario con ID ${id} no encontrado`, 404);
     }
     
     res.status(200).json({ message: "Usuario eliminado exitosamente" });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  } catch (err) {
+    next(err);
   }
 });
 

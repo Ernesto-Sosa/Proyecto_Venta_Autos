@@ -4,6 +4,7 @@ const swaggerUi = require("swagger-ui-express");
 const swaggerSpec = require("./swagger.js");
 require ("dotenv").config();
 const cors = require("cors");
+const winston = require("winston");
 
 const Usuario = require("./models/usuario.js");
 const Vehiculo = require("./models/vehiculo.js");
@@ -18,14 +19,17 @@ const vehiculoRoutes = require("./routes/vehiculoRoutes");
 const ventaRoutes = require("./routes/ventaRoutes");
 const citaPruebaManejRoutes = require("./routes/citaPruebaManejRoutes");
 
+// Importar middleware de manejo de errores
+const errorHandler = require("./middlewares/errorHandler");
+
 const app = express();
 
 // Configuracion de Cors
-const allowedOrigins = ["http://localhost:3000"];
+const allowedOrigins = ["http://localhost:3000", "http://localhost:3001"];
 app.use(
     cors({
         origin: allowedOrigins,
-        methods: ["GET", "POST", "PUT", "DELETE"],
+        methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
         credentials: true,
     })
 );
@@ -43,6 +47,9 @@ app.use("/api/usuarios", usuarioRoutes);
 app.use("/api/vehiculos", vehiculoRoutes);
 app.use("/api/ventas", ventaRoutes);
 app.use("/api/citas", citaPruebaManejRoutes);
+
+// Middleware de manejo de errores (debe ir después de todas las rutas)
+app.use(errorHandler);
 
 sequelize
  .sync({ alter: true })

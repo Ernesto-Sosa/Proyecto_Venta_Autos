@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const vehiculoController = require("../controllers/vehiculoController");
+const AppError = require("../error/appError");
 
 /**
  * @swagger
@@ -83,18 +84,18 @@ const vehiculoController = require("../controllers/vehiculoController");
  *       500:
  *         description: Error al crear el vehículo
  */
-router.post("/", async (req, res) => {
+router.post("/", async (req, res, next) => {
   try {
     const { marca, modelo, precio, año, kilometraje, color, tipo_combustible, descripcion, estado, usuario_id } = req.body;
     
     if (!marca || !modelo || !precio || !año || !kilometraje || !color || !tipo_combustible || !descripcion || !estado || !usuario_id) {
-      return res.status(400).json({ error: "Faltan campos requeridos" });
+      throw new AppError("Faltan campos requeridos para crear el vehículo", 400);
     }
     
     const vehiculo = await vehiculoController.createVehiculo({ marca, modelo, precio, año, kilometraje, color, tipo_combustible, descripcion, estado, usuario_id });
     res.status(201).json({ message: "Vehículo creado exitosamente", vehiculo });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  } catch (err) {
+    next(err);
   }
 });
 
@@ -116,12 +117,12 @@ router.post("/", async (req, res) => {
  *       500:
  *         description: Error al obtener los vehículos
  */
-router.get("/", async (req, res) => {
+router.get("/", async (req, res, next) => {
   try {
     const vehiculos = await vehiculoController.getAllVehiculos();
     res.status(200).json(vehiculos);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  } catch (err) {
+    next(err);
   }
 });
 
@@ -150,23 +151,23 @@ router.get("/", async (req, res) => {
  *       500:
  *         description: Error al obtener el vehículo
  */
-router.get("/:id", async (req, res) => {
+router.get("/:id", async (req, res, next) => {
   try {
     const { id } = req.params;
     
     if (!id || isNaN(id)) {
-      return res.status(400).json({ error: "ID inválido" });
+      throw new AppError("ID de vehículo inválido", 400);
     }
     
     const vehiculo = await vehiculoController.getVehiculoById(id);
     
     if (!vehiculo) {
-      return res.status(404).json({ message: "Vehículo no encontrado" });
+      throw new AppError(`Vehículo con ID ${id} no encontrado`, 404);
     }
     
     res.status(200).json(vehiculo);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  } catch (err) {
+    next(err);
   }
 });
 
@@ -201,24 +202,24 @@ router.get("/:id", async (req, res) => {
  *       500:
  *         description: Error al actualizar el vehículo
  */
-router.put("/:id", async (req, res) => {
+router.put("/:id", async (req, res, next) => {
   try {
     const { id } = req.params;
     const { marca, modelo, precio, año, kilometraje, color, tipo_combustible, descripcion, estado, usuario_id } = req.body;
     
     if (!id || isNaN(id)) {
-      return res.status(400).json({ error: "ID inválido" });
+      throw new AppError("ID de vehículo inválido", 400);
     }
     
     const vehiculo = await vehiculoController.updateVehiculo(id, { marca, modelo, precio, año, kilometraje, color, tipo_combustible, descripcion, estado, usuario_id });
     
     if (!vehiculo) {
-      return res.status(404).json({ message: "Vehículo no encontrado" });
+      throw new AppError(`Vehículo con ID ${id} no encontrado`, 404);
     }
     
     res.status(200).json({ message: "Vehículo actualizado exitosamente", vehiculo });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  } catch (err) {
+    next(err);
   }
 });
 
@@ -243,23 +244,23 @@ router.put("/:id", async (req, res) => {
  *       500:
  *         description: Error al eliminar el vehículo
  */
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", async (req, res, next) => {
   try {
     const { id } = req.params;
     
     if (!id || isNaN(id)) {
-      return res.status(400).json({ error: "ID inválido" });
+      throw new AppError("ID de vehículo inválido", 400);
     }
     
     const vehiculo = await vehiculoController.deleteVehiculo(id);
     
     if (!vehiculo) {
-      return res.status(404).json({ message: "Vehículo no encontrado" });
+      throw new AppError(`Vehículo con ID ${id} no encontrado`, 404);
     }
     
     res.status(200).json({ message: "Vehículo eliminado exitosamente" });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  } catch (err) {
+    next(err);
   }
 });
 
