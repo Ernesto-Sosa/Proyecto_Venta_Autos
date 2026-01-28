@@ -3,6 +3,7 @@ const sequelize = require("../helpers/database");
 const Vehiculo = require("./vehiculo");
 const Cita_Prueba_Manejo= require("./cita_prueba_manejo");
 const Venta = require("./venta");
+const bcrypt = require("bcryptjs");
 
 const Usuario = sequelize.define("usuario", {
     usuario_id: {

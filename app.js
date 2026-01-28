@@ -18,6 +18,7 @@ const usuarioRoutes = require("./routes/usuarioRoutes");
 const vehiculoRoutes = require("./routes/vehiculoRoutes");
 const ventaRoutes = require("./routes/ventaRoutes");
 const citaPruebaManejRoutes = require("./routes/citaPruebaManejRoutes");
+const authRoutes = require("./routes/authRoutes");
 
 // Importar middleware de manejo de errores
 const errorHandler = require("./middlewares/errorHandler");
@@ -42,6 +43,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Rutas
+app.use("/api/auth", authRoutes);
 app.use("/api/roles", rolRoutes);
 app.use("/api/usuarios", usuarioRoutes);
 app.use("/api/vehiculos", vehiculoRoutes);
