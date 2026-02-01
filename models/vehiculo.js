@@ -39,11 +39,15 @@ const Vehiculo = sequelize.define("vehiculo",{
     },
     descripcion: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: true,
     },
     estado: {
         type: DataTypes.STRING,
         allowNull: false,
+    },
+    foto_url: {
+        type: DataTypes.STRING,
+        allowNull: true,
     },
     usuario_id: {
         type: DataTypes.INTEGER,

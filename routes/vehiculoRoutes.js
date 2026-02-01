@@ -2,6 +2,26 @@ const express = require("express");
 const router = express.Router();
 const vehiculoController = require("../controllers/vehiculoController");
 const AppError = require("../error/appError");
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
+
+// Configuración de multer para subir imágenes de vehículos
+const uploadDir = path.join(__dirname, "..", "uploads", "vehiculos");
+fs.mkdirSync(uploadDir, { recursive: true });
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    const base = path.basename(file.originalname, ext).replace(/[^a-z0-9_-]/gi, "_");
+    cb(null, `${Date.now()}_${base}${ext}`);
+  }
+});
+const fileFilter = (req, file, cb) => {
+  if (file.mimetype && file.mimetype.startsWith("image/")) return cb(null, true);
+  cb(new AppError("Solo se permiten archivos de imagen", 400));
+};
+const upload = multer({ storage, fileFilter });
 
 /**
  * @swagger
@@ -84,15 +104,29 @@ const AppError = require("../error/appError");
  *       500:
  *         description: Error al crear el vehículo
  */
-router.post("/", async (req, res, next) => {
+router.post("/", upload.single('foto'), async (req, res, next) => {
   try {
-    const { marca, modelo, precio, año, kilometraje, color, tipo_combustible, descripcion, estado, usuario_id } = req.body;
-    
-    if (!marca || !modelo || !precio || !año || !kilometraje || !color || !tipo_combustible || !descripcion || !estado || !usuario_id) {
-      throw new AppError("Faltan campos requeridos para crear el vehículo", 400);
+    const { marca, modelo, precio, kilometraje, color, tipo_combustible, descripcion, estado, usuario_id } = req.body;
+    const año = req.body['año'] ?? req.body['anio'] ?? req.body['aÃ±o'] ?? req.body['ano'];
+    const isMissing = (v) => v === undefined || v === null || (typeof v === 'string' && v.trim() === '');
+    const precioNum = typeof precio === 'number' ? precio : parseInt(precio, 10);
+    const usuarioIdNum = typeof usuario_id === 'number' ? usuario_id : parseInt(usuario_id, 10);
+    const missing = [];
+    if (isMissing(marca)) missing.push('marca');
+    if (isMissing(modelo)) missing.push('modelo');
+    if (Number.isNaN(precioNum)) missing.push('precio');
+    if (isMissing(año)) missing.push('año');
+    if (isMissing(kilometraje)) missing.push('kilometraje');
+    if (isMissing(color)) missing.push('color');
+    if (isMissing(tipo_combustible)) missing.push('tipo_combustible');
+    if (isMissing(descripcion)) missing.push('descripcion');
+    if (isMissing(estado)) missing.push('estado');
+    if (Number.isNaN(usuarioIdNum)) missing.push('usuario_id');
+    if (missing.length) {
+      throw new AppError(`Faltan campos requeridos: ${missing.join(', ')}`, 400);
     }
-    
-    const vehiculo = await vehiculoController.createVehiculo({ marca, modelo, precio, año, kilometraje, color, tipo_combustible, descripcion, estado, usuario_id });
+    const foto_url = req.file ? `/uploads/vehiculos/${req.file.filename}` : undefined;
+    const vehiculo = await vehiculoController.createVehiculo({ marca, modelo, precio: precioNum, año, kilometraje, color, tipo_combustible, descripcion, estado, usuario_id: usuarioIdNum, foto_url });
     res.status(201).json({ message: "Vehículo creado exitosamente", vehiculo });
   } catch (err) {
     next(err);
@@ -202,16 +236,24 @@ router.get("/:id", async (req, res, next) => {
  *       500:
  *         description: Error al actualizar el vehículo
  */
-router.put("/:id", async (req, res, next) => {
+router.put("/:id", upload.single('foto'), async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { marca, modelo, precio, año, kilometraje, color, tipo_combustible, descripcion, estado, usuario_id } = req.body;
+    const { marca, modelo, precio, kilometraje, color, tipo_combustible, descripcion, estado, usuario_id } = req.body;
+    const año = req.body['año'] ?? req.body['anio'] ?? req.body['aÃ±o'] ?? req.body['ano'];
     
     if (!id || isNaN(id)) {
       throw new AppError("ID de vehículo inválido", 400);
     }
-    
-    const vehiculo = await vehiculoController.updateVehiculo(id, { marca, modelo, precio, año, kilometraje, color, tipo_combustible, descripcion, estado, usuario_id });
+    const isMissing = (v) => v === undefined || v === null || (typeof v === 'string' && v.trim() === '');
+    const precioNum = typeof precio === 'number' ? precio : (precio !== undefined ? parseInt(precio, 10) : undefined);
+    const usuarioIdNum = typeof usuario_id === 'number' ? usuario_id : (usuario_id !== undefined ? parseInt(usuario_id, 10) : undefined);
+    const foto_url = req.file ? `/uploads/vehiculos/${req.file.filename}` : undefined;
+    const payload = { marca, modelo, año, kilometraje, color, tipo_combustible, descripcion, estado };
+    if (precioNum !== undefined && !Number.isNaN(precioNum)) payload.precio = precioNum;
+    if (usuarioIdNum !== undefined && !Number.isNaN(usuarioIdNum)) payload.usuario_id = usuarioIdNum;
+    if (foto_url) payload.foto_url = foto_url;
+    const vehiculo = await vehiculoController.updateVehiculo(id, payload);
     
     if (!vehiculo) {
       throw new AppError(`Vehículo con ID ${id} no encontrado`, 404);

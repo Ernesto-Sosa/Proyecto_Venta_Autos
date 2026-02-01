@@ -31,6 +31,10 @@ const Usuario = sequelize.define("usuario", {
         type: DataTypes.STRING,
         allowNull: false,
     },
+    avatar_url: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
     rol_id: {
         type: DataTypes.INTEGER,
         allowNull: false,

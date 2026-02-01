@@ -1,5 +1,6 @@
 const sequelize = require("./helpers/database.js"); 
 const express = require("express");
+const path = require("path");
 const swaggerUi = require("swagger-ui-express");
 const swaggerSpec = require("./swagger.js");
 require ("dotenv").config();
@@ -38,6 +39,8 @@ app.use(
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+// Servir archivos estáticos subidos
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Swagger
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));

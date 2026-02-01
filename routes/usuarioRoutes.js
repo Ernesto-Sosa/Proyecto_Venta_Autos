@@ -2,6 +2,9 @@ const express = require("express");
 const router = express.Router();
 const usuarioController = require("../controllers/usuarioController");
 const AppError = require("../error/appError");
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
 
 /**
  * @swagger
@@ -36,6 +39,9 @@ const AppError = require("../error/appError");
  *         telefono:
  *           type: string
  *           description: Teléfono del usuario
+ *         avatar_url:
+ *           type: string
+ *           description: URL del avatar del usuario
  *         rol_id:
  *           type: integer
  *           description: ID del rol del usuario
@@ -71,7 +77,7 @@ const AppError = require("../error/appError");
  */
 router.post("/", async (req, res, next) => {
   try {
-    const { nombre, apellido, email, contraseña, telefono, rol_id } = req.body;
+    const { nombre, apellido, email, contraseña, telefono, rol_id, avatar_url } = req.body;
     
     if (!nombre || !apellido || !email || !contraseña || !telefono || !rol_id) {
       throw new AppError("Faltan campos requeridos: nombre, apellido, email, contraseña, telefono, rol_id", 400);
@@ -85,7 +91,7 @@ router.post("/", async (req, res, next) => {
       throw new AppError(`Ya existe un usuario con el email '${email}'`, 400);
     }
     
-    const usuario = await usuarioController.createUsuario({ nombre, apellido, email, contraseña, telefono, rol_id });
+    const usuario = await usuarioController.createUsuario({ nombre, apellido, email, contraseña, telefono, rol_id, avatar_url });
     res.status(201).json({ message: "Usuario creado exitosamente", usuario });
   } catch (err) {
     next(err);
@@ -198,13 +204,13 @@ router.get("/:id", async (req, res, next) => {
 router.put("/:id", async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { nombre, apellido, email, contraseña, telefono, rol_id } = req.body;
+    const { nombre, apellido, email, contraseña, telefono, rol_id, avatar_url } = req.body;
     
     if (!id || isNaN(id)) {
       throw new AppError("ID de usuario inválido", 400);
     }
     
-    const usuario = await usuarioController.updateUsuario(id, { nombre, apellido, email, contraseña, telefono, rol_id });
+    const usuario = await usuarioController.updateUsuario(id, { nombre, apellido, email, contraseña, telefono, rol_id, avatar_url });
     
     if (!usuario) {
       throw new AppError(`Usuario con ID ${id} no encontrado`, 404);
@@ -258,3 +264,67 @@ router.delete("/:id", async (req, res, next) => {
 });
 
 module.exports = router;
+
+// Configuración de multer para subir avatares de usuarios
+const uploadDir = path.join(__dirname, "..", "uploads", "usuarios");
+fs.mkdirSync(uploadDir, { recursive: true });
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    const base = path.basename(file.originalname, ext).replace(/[^a-z0-9_-]/gi, "_");
+    cb(null, `${Date.now()}_${base}${ext}`);
+  }
+});
+const fileFilter = (req, file, cb) => {
+  if (file.mimetype && file.mimetype.startsWith("image/")) return cb(null, true);
+  cb(new AppError("Solo se permiten archivos de imagen", 400));
+};
+const upload = multer({ storage, fileFilter });
+
+/**
+ * @swagger
+ * /api/usuarios/{id}/avatar:
+ *   put:
+ *     summary: Subir/actualizar avatar del usuario
+ *     tags: [Usuarios]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID del usuario
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               avatar:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Avatar actualizado exitosamente
+ */
+router.put("/:id/avatar", upload.single('avatar'), async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    if (!id || isNaN(id)) {
+      throw new AppError("ID de usuario inválido", 400);
+    }
+    const avatar_url = req.file ? `/uploads/usuarios/${req.file.filename}` : undefined;
+    if (!avatar_url) {
+      throw new AppError("No se recibió archivo de imagen", 400);
+    }
+    const usuario = await usuarioController.updateUsuario(id, { avatar_url });
+    if (!usuario) {
+      throw new AppError(`Usuario con ID ${id} no encontrado`, 404);
+    }
+    res.status(200).json({ message: "Avatar actualizado exitosamente", usuario });
+  } catch (err) {
+    next(err);
+  }
+});
