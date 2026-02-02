@@ -35,6 +35,15 @@ const Usuario = sequelize.define("usuario", {
         type: DataTypes.STRING,
         allowNull: true,
     },
+    twofa_secret: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    twofa_enabled: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+    },
     rol_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
