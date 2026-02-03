@@ -67,13 +67,13 @@ const AppError = require("../error/appError");
  */
 router.post("/", async (req, res, next) => {
   try {
-    const { fecha, precio_final, usuario_id, vehiculo_id, estado_venta } = req.body;
+    const { fecha, precio_final, usuario_id, vehiculo_id } = req.body;
     
-    if (!fecha || !precio_final || !usuario_id || !vehiculo_id || !estado_venta) {
-      throw new AppError("Faltan campos requeridos: fecha, precio_final, usuario_id, vehiculo_id, estado_venta", 400);
+    if (!fecha || !precio_final || !usuario_id || !vehiculo_id) {
+      throw new AppError("Faltan campos requeridos: fecha, precio_final, usuario_id, vehiculo_id", 400);
     }
     
-    const venta = await ventaController.createVenta({ fecha, precio_final, usuario_id, vehiculo_id, estado_venta });
+    const venta = await ventaController.createVenta({ fecha, precio_final, usuario_id, vehiculo_id });
     res.status(201).json({ message: "Venta creada exitosamente", venta });
   } catch (err) {
     next(err);

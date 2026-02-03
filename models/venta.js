@@ -23,6 +23,14 @@ const Venta = sequelize.define("venta", {
         type: DataTypes.INTEGER,
         allowNull: false,
     },
+    vehiculo_marca: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    vehiculo_modelo: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
     estado_venta: {
         type: DataTypes.STRING,
         allowNull: false,
