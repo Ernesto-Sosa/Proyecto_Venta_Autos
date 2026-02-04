@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const ventaController = require("../controllers/ventaController");
+const { notifyNewSale } = require("../services/telegramService");
+const Usuario = require("../models/usuario");
 const AppError = require("../error/appError");
 
 /**
@@ -74,6 +76,15 @@ router.post("/", async (req, res, next) => {
     }
     
     const venta = await ventaController.createVenta({ fecha, precio_final, usuario_id, vehiculo_id });
+    try {
+      // Adjuntar datos del vendedor para la notificación
+      const vendedor = await Usuario.findByPk(venta.usuario_id, { attributes: ['usuario_id', 'nombre', 'apellido', 'email'] });
+      const ventaInfo = {
+        ...venta.get({ plain: true }),
+        usuario: vendedor ? vendedor.get({ plain: true }) : undefined,
+      };
+      await notifyNewSale(ventaInfo);
+    } catch (_) {}
     res.status(201).json({ message: "Venta creada exitosamente", venta });
   } catch (err) {
     next(err);

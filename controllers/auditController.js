@@ -61,6 +61,7 @@ exports.getRecentSales = async (limit = 50) => {
     limit,
     order: [['createdAt', 'DESC']],
     attributes: ['venta_id', 'fecha', 'precio_final', 'usuario_id', 'vehiculo_id', 'vehiculo_marca', 'vehiculo_modelo', 'createdAt'],
+    include: [{ model: Usuario, attributes: ['usuario_id', 'nombre', 'apellido', 'email'] }],
   });
   return rows;
 };
