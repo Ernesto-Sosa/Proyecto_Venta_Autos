@@ -12,6 +12,7 @@ const Vehiculo = require("./models/vehiculo.js");
 const Rol = require("./models/rol.js");
 const Venta = require("./models/venta.js");
 const Cita_Prueba_Manejo = require("./models/cita_prueba_manejo.js");
+const SessionLog = require("./models/session_log.js");
 
 // Importar rutas
 const rolRoutes = require("./routes/rolRoutes");
@@ -20,6 +21,7 @@ const vehiculoRoutes = require("./routes/vehiculoRoutes");
 const ventaRoutes = require("./routes/ventaRoutes");
 const citaPruebaManejRoutes = require("./routes/citaPruebaManejRoutes");
 const authRoutes = require("./routes/authRoutes");
+const auditRoutes = require("./routes/auditRoutes");
 
 // Importar middleware de manejo de errores
 const errorHandler = require("./middlewares/errorHandler");
@@ -52,6 +54,7 @@ app.use("/api/usuarios", usuarioRoutes);
 app.use("/api/vehiculos", vehiculoRoutes);
 app.use("/api/ventas", ventaRoutes);
 app.use("/api/citas", citaPruebaManejRoutes);
+app.use("/api/audit", auditRoutes);
 
 // Middleware de manejo de errores (debe ir después de todas las rutas)
 app.use(errorHandler);
